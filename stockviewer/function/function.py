@@ -9,6 +9,7 @@ def build_dataset(ticker_symbols, start_date, end_date) -> dict[str, pd.DataFram
         df = yfinance.Ticker(ticker) \
             .history(start=start_date, end=end_date).Close \
             .reset_index().set_index('Date') \
+            .resample('D', convention='end').asfreq() \
             .ffill().bfill()
 
         dataset[ticker] = df.rename(columns={'Close': ticker})
@@ -32,9 +33,13 @@ def build_portfolio(dataset, activity_df):
     ).swaplevel(axis=1)
 
 
-def portfolio_value(portfolio):
+
+def portfolio_value(portfolio: pd.DataFrame) -> pd.DataFrame:
     # Retrieve stock count per day
-    return portfolio.iloc[:, portfolio.columns.get_level_values(1) == 'value'].sum(axis=1)
+    values = portfolio.iloc[:, portfolio.columns.get_level_values(1) == 'value'].sum(axis=1).reset_index()
+    values.index = pd.to_datetime(values.Date)
+    values = values.loc[:, [0]].rename(columns={0:'total_value'})
+    return values
 
 
 class AccumulateActivity:

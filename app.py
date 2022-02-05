@@ -1,9 +1,8 @@
 from datetime import date, timedelta
 
-import pandas as pd
-
 from stockviewer.data.Activity import Activity, activities_to_df
-from stockviewer.function.function import enrich, build_dataset, build_portfolio, portfolio_value
+from stockviewer.function.function import build_dataset, build_portfolio, portfolio_value
+import plotly.express as px
 
 if __name__ == '__main__':
     # Parse activities
@@ -24,6 +23,7 @@ if __name__ == '__main__':
     dataset = build_dataset(ticker_symbols, start_date, end_date)
 
     portfolio = build_portfolio(dataset, activity_df)
-    print(portfolio_value(portfolio))
+    df = portfolio_value(portfolio)
 
-
+    fig = px.line(df.reset_index(), x='Date', y="total_value")
+    fig.show()
