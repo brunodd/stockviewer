@@ -1,22 +1,12 @@
 from datetime import timedelta, date
 
 import dash
-import dash_core_components as dcc
-import dash_html_components as html
-import plotly.express as px
 
-from stockviewer.data.Activity import Activity, activities_to_df
-from stockviewer.function.function import build_dataset, build_portfolio, portfolio_value
+from stockviewer.data.Activity import read_activities
+from stockviewer.function.function import build_dataset, build_portfolio
+from stockviewer.gui.dash import build_dash_layout
 
-activities = [
-    Activity('2021-01-04', 'AAPL', 10, 130),
-    Activity('2021-01-11', 'AAPL', -5, 150),
-    Activity('2021-01-08', 'VGP.BR', 10, 150),
-    Activity('2021-01-12', 'VGP.BR', 10, 150),
-
-]
-
-activity_df = activities_to_df(activities)
+activity_df = read_activities()
 
 start_date = str(activity_df.index.min()).split()[0]
 end_date = date.today() - timedelta(days=1)
@@ -25,20 +15,10 @@ ticker_symbols = activity_df.ticker.drop_duplicates()
 dataset = build_dataset(ticker_symbols, start_date, end_date)
 
 portfolio = build_portfolio(dataset, activity_df)
-df = portfolio_value(portfolio)
-
-fig = px.line(df.reset_index(), x='Date', y="total_value")
 
 app = dash.Dash()
 server = app.server
-app.layout = html.Div([
-    html.H1(children="Hello world!", className="hello",
-            style={'color': '#00361c', 'text-align': 'center'
-                   }),
-    html.Div([
-        dcc.Graph(id='portfolio', figure=fig)
-    ])
-])
+build_dash_layout(app, portfolio)
 
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0', debug=True, port=8080)

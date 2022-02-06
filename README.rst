@@ -27,6 +27,10 @@ To package the application and create the wheel file run
 
     poetry build
 
+Data
+-----
+This project currently reads dat
+
 Docker
 -------
 Build the image, we'll name it `my-image`.
@@ -42,5 +46,5 @@ Instantiate and run the container, we'll map localhost:8080 to the application
 
 .. code-block:: bash
 
-    docker run --rm -p 8080:80 my-image
+    docker run --rm -p 8080:80 --volume $(pwd)/data/:/data/ stockviewer
 
