@@ -4,14 +4,18 @@ import yfinance
 from pandas import Timestamp
 
 
+def get_data_single_symbol(symbol, start_date, end_date) -> pd.DataFrame:
+    return yfinance.Ticker(symbol) \
+        .history(start=start_date, end=end_date)[['Close', 'Dividends']] \
+        .reset_index().set_index('Date') \
+        .resample('D', convention='end').asfreq() \
+        .ffill().bfill()
+
+
 def build_dataset(ticker_symbols, start_date, end_date) -> dict[str, pd.DataFrame]:
     dataset = dict()
     for ticker in ticker_symbols:
-        df = yfinance.Ticker(ticker) \
-            .history(start=start_date, end=end_date).Close \
-            .reset_index().set_index('Date') \
-            .resample('D', convention='end').asfreq() \
-            .ffill().bfill()
+        df = get_data_single_symbol(ticker, start_date, end_date)
 
         dataset[ticker] = df.rename(columns={'Close': ticker})
     return dataset

@@ -4,7 +4,8 @@ import dash
 
 from stockviewer.data.Activity import read_activities
 from stockviewer.function.function import build_dataset, build_portfolio
-from stockviewer.gui.dash import build_dash_layout
+from stockviewer.gui.dash import build_portfolio_layout
+# from stockviewer.gui.example_dash import build_portfolio_layout
 
 activity_df = read_activities()
 
@@ -18,7 +19,8 @@ portfolio = build_portfolio(dataset, activity_df)
 
 app = dash.Dash()
 server = app.server
-build_dash_layout(app, portfolio)
+app = build_portfolio_layout(app, portfolio)
+# app = build_detail_layout(app, 'AAPL')
 
 if __name__ == '__main__':
     app.run_server(host='0.0.0.0', debug=True, port=8080)
