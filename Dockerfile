@@ -1,21 +1,14 @@
-FROM python:3.9
+FROM condaforge/miniforge3
 
-
-RUN python -m pip install poetry
-
+EXPOSE 8080
 
 WORKDIR /code/
-COPY poetry.lock pyproject.toml /code/
-COPY stockviewer/ /code/stockviewer
 
-RUN poetry config virtualenvs.create false && \
-    poetry install --no-interaction --no-ansi
+RUN conda install yfinance addict seaborn plotly dash gunicorn
+COPY stockviewer.yml app.py /code/
+COPY data/ /code/data/
+COPY stockviewer/ /code/stockviewer/
 
-COPY app.py /code/
+ENV DATA_VOLUME=/code/data/
 
-VOLUME /data/
-ENV DATA_VOLUME=/data/
-
-EXPOSE 80
-
-CMD ["gunicorn", "-b", "0.0.0.0:80", "app:server"]
+CMD python -m app
