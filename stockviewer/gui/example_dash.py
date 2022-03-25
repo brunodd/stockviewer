@@ -3,7 +3,7 @@ import plotly.express as px
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
 
-from stockviewer.function.function import portfolio_value, compute_distribution, get_data_single_symbol
+from stockviewer.function.function import portfolio_value, compute_distribution, get_ticker_historical
 
 
 def build_portfolio_layout(app, _):

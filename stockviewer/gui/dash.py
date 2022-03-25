@@ -4,8 +4,9 @@ import pandas as pd
 import plotly.express as px
 from dash import dcc, html
 from dash.dependencies import Input, Output, State
+import plotly.graph_objects as go
 
-from stockviewer.function.function import portfolio_value, compute_distribution, get_data_single_symbol
+from stockviewer.function.function import portfolio_value, compute_distribution, get_ticker_historical, get_ticker_balance
 
 
 def date_range(start, end):
@@ -66,6 +67,11 @@ def build_portfolio_layout(app, portfolio):
                         style={'color': 'blue', 'text-align': 'center'}),
                 dcc.Graph(id='ticker-detail-dividend')
             ]),
+            html.Div([
+                html.H2(children="Balance", className="title",
+                        style={'color': 'blue', 'text-align': 'center'}),
+                dcc.Graph(id='ticker-detail-balance')
+            ])
         ]),
 
     ])
@@ -78,6 +84,43 @@ def build_portfolio_layout(app, portfolio):
     ])
 
     @app.callback(
+        Output('ticker-detail-balance', 'figure'),
+        State('input-ticker', 'value'),
+        Input('input-on-submit', 'n_clicks'),
+    )
+    def ticker_balance_render(input_ticker, _):
+        if input_ticker:
+            print("Found ticker")
+            balance_df = get_ticker_balance(input_ticker).reset_index()
+
+            balance_df.columns = ['date', 'debt', 'assets']
+            # balance_df = balance_df.melt(id_vars=['date'], value_vars=['debt', 'assets'])
+
+            # print("Returning df")
+            # print(balance_df)
+            fig = go.Figure()
+            fig.add_trace(
+                go.Bar(
+                    x=balance_df.date,
+                    y=balance_df.debt,
+                    name='Debt',
+                    marker_color='indianred'
+                )
+            )
+            fig.add_trace(
+                go.Bar(
+                    x=balance_df.date,
+                    y=balance_df.assets,
+                    name='Assets',
+                    marker_color='green'
+                )
+            )
+            return fig
+        else:
+            print("Empty")
+            return px.bar(pd.DataFrame())
+
+    @app.callback(
         Output('ticker-detail-price', 'figure'),
         State('input-ticker', 'value'),
         Input('input-on-submit', 'n_clicks'),
@@ -87,7 +130,7 @@ def build_portfolio_layout(app, portfolio):
     )
     def ticker_price_render(input_ticker, _, start_date, end_date):
         if input_ticker:
-            ticker_df = get_data_single_symbol(input_ticker, start_date, end_date).rename(
+            ticker_df = get_ticker_historical(input_ticker, start_date, end_date).rename(
                 columns={'Close': 'price_evolution'}).reset_index()
         else:
             ticker_df = pd.DataFrame({'Date': [], 'price_evolution': []})
@@ -104,7 +147,7 @@ def build_portfolio_layout(app, portfolio):
     )
     def ticker_price_render(input_ticker, _, start_date, end_date):
         if input_ticker:
-            ticker_df = get_data_single_symbol(input_ticker, start_date, end_date).rename(
+            ticker_df = get_ticker_historical(input_ticker, start_date, end_date).rename(
                 columns={'Dividends': 'dividend'}).resample('Q').sum().reset_index()
         else:
             ticker_df = pd.DataFrame({'Date': [], 'dividend': []})

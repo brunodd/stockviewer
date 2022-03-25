@@ -3,10 +3,28 @@ import pandas as pd
 import yfinance
 from pandas import Timestamp
 
+HISTORICAL_FIELDS = ['Close', 'Dividends']
+BALANCE_FIELDS = ['Short Long Term Debt', 'Long Term Debt', 'Total Assets']
 
-def get_data_single_symbol(symbol, start_date, end_date) -> pd.DataFrame:
-    return yfinance.Ticker(symbol) \
-        .history(start=start_date, end=end_date)[['Close', 'Dividends']] \
+
+def get_ticker(symbol):
+    return yfinance.Ticker(symbol)
+
+
+def get_ticker_balance(symbol, freq='yearly') -> pd.DataFrame:
+    """
+    :param freq: 'yearly' or 'quarterly'
+    """
+    df = get_ticker(symbol).get_balancesheet(freq=freq).T[BALANCE_FIELDS]
+    df['debt'] = df['Short Long Term Debt'] + df['Long Term Debt']
+    df['assets'] = df['Total Assets']
+    df.index = pd.to_datetime(df.index)
+    return df[['debt', 'assets']]
+
+
+def get_ticker_historical(symbol, start_date, end_date) -> pd.DataFrame:
+    return get_ticker(symbol) \
+        .history(start=start_date, end=end_date)[HISTORICAL_FIELDS] \
         .reset_index().set_index('Date') \
         .resample('D', convention='end').asfreq() \
         .ffill().bfill()
@@ -15,7 +33,7 @@ def get_data_single_symbol(symbol, start_date, end_date) -> pd.DataFrame:
 def build_dataset(ticker_symbols, start_date, end_date) -> dict[str, pd.DataFrame]:
     dataset = dict()
     for ticker in ticker_symbols:
-        df = get_data_single_symbol(ticker, start_date, end_date)
+        df = get_ticker_historical(ticker, start_date, end_date)
 
         dataset[ticker] = df.rename(columns={'Close': ticker})
     return dataset
