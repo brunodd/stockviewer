@@ -4,20 +4,48 @@ import yfinance
 from pandas import Timestamp
 
 HISTORICAL_FIELDS = ['Close', 'Dividends']
-BALANCE_FIELDS = ['Short Long Term Debt', 'Long Term Debt', 'Total Assets']
+BALANCE_FIELDS = ['Total Liab', 'Total Assets']
 
 
 def get_ticker(symbol):
     return yfinance.Ticker(symbol)
 
 
+def filter_available_fields(fields, available) -> list[str]:
+    result = list()
+    for f in fields:
+        if f in available:
+            result.append(f)
+    return result
+
+def get_balance_type(fields):
+    assets = list()
+    debts = list()
+    for f in fields:
+        if 'liab' in f.lower():
+            debts.append(f)
+        elif 'asset' in f.lower():
+            assets.append(f)
+    return (assets, debts)
+
+
 def get_ticker_balance(symbol, freq='yearly') -> pd.DataFrame:
     """
     :param freq: 'yearly' or 'quarterly'
     """
-    df = get_ticker(symbol).get_balancesheet(freq=freq).T[BALANCE_FIELDS]
-    df['debt'] = df['Short Long Term Debt'] + df['Long Term Debt']
-    df['assets'] = df['Total Assets']
+    df = get_ticker(symbol).get_balancesheet(freq=freq)
+    available = [str(i) for i in df.index.tolist()]
+    print(df)
+    print(available)
+    fields = filter_available_fields(BALANCE_FIELDS, available)
+    df = df.T[fields]
+    asset_cols, debt_cols = get_balance_type(fields)
+    print(asset_cols)
+    print(df)
+    df['assets'] = df.loc[:, asset_cols].sum(axis=1)
+    df['debt'] = df.loc[:, debt_cols].sum(axis=1)
+    # df['debt'] = df['Short Long Term Debt'] + df['Long Term Debt']
+    # df['assets'] = df['Total Assets']
     df.index = pd.to_datetime(df.index)
     return df[['debt', 'assets']]
 

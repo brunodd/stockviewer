@@ -1,0 +1,12 @@
+name: stockviewer310
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - plotly
+  - seaborn
+  - dash
+  - gunicorn
+  - addict
+  - yfinance
+  - notebook
